@@ -12,3 +12,13 @@ def create_customer(name,email):
     connection.commit()
     connection.close()
     return customer_id
+
+def update_customer():
+    pass
+
+def get_customer():
+    pass
+
+def delete_customer():
+    pass
+
