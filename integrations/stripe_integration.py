@@ -13,4 +13,5 @@ class StripeIntegration(Integration):
         stripe.Customer.modify(stripe_id, **kwargs)
 
     def delete_customer(self, stripe_id):
+        stripe_id=str(stripe_id)
         stripe.Customer.delete(stripe_id)
