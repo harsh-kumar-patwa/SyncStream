@@ -7,12 +7,22 @@ stripe_integration = StripeIntegration()
 def send_update_to_external_system(event):
     if event['type']=='create':
         stripe_id = stripe_integration.create_customer(event['data']['name'], event['data']['email'])
-        print(stripe_id+"\n")
-        update_customer(event['data']['id'],stripe_id=stripe_id)
-    elif event['type']=='update':
-        stripe_integration.update_customer(event['data']['stripe_id'], **event['data'])
-    elif event['type']=='delete':
-        stripe_integration.delete_customer(event['data']['id'])
+        update_customer(event['data']['id'], stripe_id=stripe_id)
+
+    elif event['type'] == 'update':
+        customer_id = event['data'].pop('id')
+        stripe_id = event['data'].pop('stripe_id', None)
+        if stripe_id:
+            stripe_integration.update_customer(stripe_id, **event['data'])
+        else:
+            print(f"No Stripe ID found for customer {customer_id}")
+
+    elif event['type'] == 'delete':
+        stripe_id = event['data'].get('stripe_id')
+        if stripe_id:
+            stripe_integration.delete_customer(stripe_id)
+        else:
+            print(f"No Stripe ID found for customer {event['data'].get('id')}")
 
 def start_outsync():
     consumer= get_consumer();

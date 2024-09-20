@@ -26,8 +26,8 @@ def add_customer():
         send_event('create', {'id': customer_id, 'name': data['name'], 'email': data['email']})
     except Exception as e:
         logger.error(f"Error sending create event to Kafka: {str(e)}")
-        return jsonify({'error':'Customer created but could not send to Stripe'}), 409
-    return jsonify({'id': customer_id}), 201
+
+    return jsonify({'id': customer_id,'name': data['name'],'email': data['email']}), 201
 
 
 #Modify or Update user request
@@ -42,12 +42,13 @@ def modify_customer(customer_id):
         return jsonify({'error': error}), 404
 
     updated_customer, error = update_customer(customer_id, **data)
+
     if error:
         logger.error(f"Error updating customer {customer_id}: {error}")
         return jsonify({'error': error}), 500
 
     try:
-        send_event('update', {'id': customer_id, **data})
+        send_event('update', {'id':customer_id,'stripe_id': updated_customer['stripe_id'], **data})
     except Exception as e:
         logger.error(f"Error sending update event to Kafka: {str(e)}")
         return jsonify({'error':'Customer updated but could not send to Stripe'}), 409
@@ -57,17 +58,17 @@ def modify_customer(customer_id):
 #Delete user request
 @api.route('/customers/<int:customer_id>', methods=['DELETE'])
 def remove_customer(customer_id):
-    deleted_id, error = delete_customer(int(customer_id))
+    stripe_id, error = delete_customer(int(customer_id))
     if error:
         logger.error(f"Error deleting customer {customer_id}: {error}")
         return jsonify({'error': error}), 404 if "not found" in error.lower() else 500
 
     try:
-        send_event('delete', {'id': deleted_id})
+        send_event('delete', {'id':customer_id,'stripe_id': stripe_id})
     except Exception as e:
         logger.error(f"Error sending delete event to Kafka: {str(e)}")
         return jsonify({'error':'Customer deleted but could not send to Stripe'}), 409
-    return jsonify({'success': True}), 200
+    return jsonify({'success': True,'message':'Deletion successful'}), 200
 
 
 #Webhook 
@@ -89,7 +90,7 @@ def stripe_webhook():
     try:
         sync_from_stripe(event)
     except Exception as e:
-        logger.error(f"Error processing Stripe event: {str(e)}")
+        logger.exception(f"Error processing Stripe event: {str(e)}")
         return jsonify({'error': 'Error processing event'}), 500
 
     return jsonify({'success': True}), 200

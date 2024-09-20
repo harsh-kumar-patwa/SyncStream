@@ -1,5 +1,4 @@
 import sqlite3 
-from sqlite3 import IntegrityError
 from config import DATABASE_PATH
 import logging
 
@@ -9,15 +8,15 @@ def get_db_connection():
     return sqlite3.connect(DATABASE_PATH)
 
 
-def create_customer(name, email):
+def create_customer(name, email, stripe_id=None):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        cursor.execute('INSERT INTO customer (name, email) VALUES (?, ?)', (name, email))
+        cursor.execute('INSERT INTO customer (name, email, stripe_id) VALUES (?, ?, ?)', (name, email, stripe_id))
         customer_id = cursor.lastrowid
         connection.commit()
         return customer_id, None
-    except IntegrityError as e:
+    except sqlite3.Error as e:
         if "UNIQUE constraint failed: customer.email" in str(e):
             return None, "Email already exists"
         else:
@@ -94,6 +93,22 @@ def get_customer_by_external_id(external_id_type, external_id):
             return dict(zip(['id', 'name', 'email', 'stripe_id'], customer)), None
         else:
             return None, f"Customer with {external_id_type} {external_id} not found"
+    except sqlite3.Error as e:
+        logger.error(f"Database error: {str(e)}")
+        return None, f"Database error: {str(e)}"
+    finally:
+        connection.close()
+
+def get_customer_by_email(email):
+    connection = get_db_connection()
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT * FROM customer WHERE email = ?', (email,))
+        customer = cursor.fetchone()
+        if customer:
+            return dict(zip(['id', 'name', 'email', 'stripe_id'], customer)), None
+        else:
+            return None, "Customer not found"
     except sqlite3.Error as e:
         logger.error(f"Database error: {str(e)}")
         return None, f"Database error: {str(e)}"
