@@ -13,12 +13,38 @@ def create_customer(name,email):
     connection.close()
     return customer_id
 
-def update_customer():
-    pass
+def update_customer(customer_id,**kwargs):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    set_clause = ', '.join([f'{k} = ?' for k in kwargs.keys()])
+    values = list(kwargs.values()) + [customer_id]
+    cursor.execute(f'UPDATE customers SET {set_clause} WHERE id = ?', values)
+    connection.commit()
+    connection.close()
 
-def get_customer():
-    pass
+    if cursor.rowcount>0:
+        return customer_id
+    else :
+        return None
 
-def delete_customer():
-    pass
+def get_customer(customer_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('SELECT * FROM customers WHERE id = ?', (customer_id,))
+    customer = cursor.fetchone()
+    connection.close()
+    return customer
+
+def delete_customer(customer_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('DELETE FROM customers WHERE id = ?', (customer_id))
+    deleted = cursor.rowcount > 0
+    connection.commit()
+    connection.close()
+    
+    if deleted:
+        return customer_id
+    else:
+        return None
 
