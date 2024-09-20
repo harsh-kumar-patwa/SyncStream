@@ -65,11 +65,18 @@ def delete_customer(customer_id):
     connection = get_db_connection()
     try:
         cursor = connection.cursor()
+        cursor.execute('SELECT stripe_id FROM customer WHERE id = ?', (customer_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return None, "Customer not found"
+        
+        stripe_id = result[0]
         cursor.execute('DELETE FROM customer WHERE id = ?', (customer_id,))
         connection.commit()
         if cursor.rowcount == 0:
             return None, "Customer not found"
-        return customer_id, None
+        return stripe_id, None
     except sqlite3.Error as e:
         logger.error(f"Database error: {str(e)}")
         return None, f"Database error: {str(e)}"

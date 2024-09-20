@@ -57,7 +57,7 @@ def modify_customer(customer_id):
 #Delete user request
 @api.route('/customers/<int:customer_id>', methods=['DELETE'])
 def remove_customer(customer_id):
-    deleted_id, error = delete_customer(customer_id)
+    deleted_id, error = delete_customer(int(customer_id))
     if error:
         logger.error(f"Error deleting customer {customer_id}: {error}")
         return jsonify({'error': error}), 404 if "not found" in error.lower() else 500
@@ -75,7 +75,6 @@ def remove_customer(customer_id):
 def stripe_webhook():
     payload = request.data
     sig_header = request.headers.get('Stripe-Signature')
-
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, STRIPE_WEBHOOK_SECRET
