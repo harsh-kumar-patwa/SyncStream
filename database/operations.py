@@ -16,13 +16,16 @@ def create_customer(name,email):
 def update_customer(customer_id,**kwargs):
     connection = get_db_connection()
     cursor = connection.cursor()
-    set_clause = ', '.join([f'{k} = ?' for k in kwargs.keys()])
-    values = list(kwargs.values()) + [customer_id]
-    cursor.execute(f'UPDATE customers SET {set_clause} WHERE id = ?', values)
+
+    columns = ', '.join([f'{k} = ?' for k in kwargs])
+    values = list(kwargs.values())
+    cursor.execute(f'UPDATE customers SET {columns} WHERE id = ?', (*values,customer_id))
+
     connection.commit()
+    count= cursor.rowcount
     connection.close()
 
-    if cursor.rowcount>0:
+    if count>0:
         return customer_id
     else :
         return None
@@ -48,6 +51,7 @@ def delete_customer(customer_id):
     else:
         return None
     
+# for the stripe or other integration update 
 def get_customer_by_external_id(external_id_type, external_id):
     connection = get_db_connection()
     cursor = connection.cursor()
