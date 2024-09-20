@@ -19,7 +19,7 @@ def update_customer(customer_id,**kwargs):
 
     columns = ', '.join([f'{k} = ?' for k in kwargs])
     values = list(kwargs.values())
-    cursor.execute(f'UPDATE customers SET {columns} WHERE id = ?', (*values,customer_id))
+    cursor.execute(f'UPDATE customer SET {columns} WHERE id = ?', (*values,customer_id))
 
     connection.commit()
     count= cursor.rowcount
@@ -33,7 +33,7 @@ def update_customer(customer_id,**kwargs):
 def get_customer(customer_id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute('SELECT * FROM customers WHERE id = ?', (customer_id,))
+    cursor.execute('SELECT * FROM customer WHERE id = ?', (customer_id,))
     customer = cursor.fetchone()
     connection.close()
     return customer
@@ -41,7 +41,7 @@ def get_customer(customer_id):
 def delete_customer(customer_id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute('DELETE FROM customers WHERE id = ?', (customer_id))
+    cursor.execute('DELETE FROM customer WHERE id = ?', (customer_id,))
     deleted = cursor.rowcount > 0
     connection.commit()
     connection.close()
@@ -55,7 +55,7 @@ def delete_customer(customer_id):
 def get_customer_by_external_id(external_id_type, external_id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute(f'SELECT * FROM customers WHERE {external_id_type} = ?', (external_id,))
+    cursor.execute(f'SELECT * FROM customer WHERE {external_id_type} = ?', (external_id,))
     customer = cursor.fetchone()
     connection.close()
     return customer
