@@ -47,4 +47,12 @@ def delete_customer(customer_id):
         return customer_id
     else:
         return None
+    
+def get_customer_by_external_id(external_id_type, external_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(f'SELECT * FROM customers WHERE {external_id_type} = ?', (external_id,))
+    customer = cursor.fetchone()
+    connection.close()
+    return customer
 
