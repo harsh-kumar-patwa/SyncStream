@@ -114,3 +114,16 @@ def get_customer_by_email(email):
         return None, f"Database error: {str(e)}"
     finally:
         connection.close()
+
+def get_all_customers():
+    connection = get_db_connection()
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT * FROM customer')
+        customers = cursor.fetchall()
+        return [dict(zip(['id', 'name', 'email', 'stripe_id'], customer)) for customer in customers], None
+    except sqlite3.Error as e:
+        logger.error(f"Database error: {str(e)}")
+        return None, f"Database error: {str(e)}"
+    finally:
+        connection.close()

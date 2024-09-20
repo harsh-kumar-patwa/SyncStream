@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from database.operations import create_customer,update_customer,delete_customer,get_customer
+from database.operations import create_customer,update_customer,delete_customer,get_customer,get_all_customers
 from utils.kafka_client import send_event 
 from sync.insync import sync_from_stripe
 from config import STRIPE_WEBHOOK_SECRET
@@ -95,5 +95,19 @@ def stripe_webhook():
 
     return jsonify({'success': True}), 200
 
+@api.route('/customers', methods=['GET'])
+def get_customers():
+    customers, error = get_all_customers()
+    if error:
+        logger.error(f"Error retrieving customers: {error}")
+        return jsonify({'error': error}), 500
+    return jsonify({'customers': customers}), 200
 
+@api.route('/customers/<int:customer_id>', methods=['GET'])
+def get_single_customer(customer_id):
+    customer, error = get_customer(customer_id)
+    if error:
+        logger.error(f"Error retrieving customer {customer_id}: {error}")
+        return jsonify({'error': error}), 404 if "not found" in error.lower() else 500
+    return jsonify({'customer': customer}), 200
 
