@@ -1,7 +1,8 @@
 import sqlite3
+from config import DATABASE_PATH
 
 def initialise_db():
-    connection = sqlite3.connect("")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS customers (
