@@ -4,7 +4,7 @@ import json
 import time
 
 def get_kafka_producer():
-    for _ in range(5):  # Try 5 times
+    for _ in range(5):
         try:
             return KafkaProducer(
                 bootstrap_servers=[KAFKA_SERVER],
@@ -16,7 +16,7 @@ def get_kafka_producer():
     raise Exception("Failed to connect to Kafka after several attempts")
 
 def get_kafka_consumer():
-    for _ in range(5):  # Try 5 times
+    for _ in range(5):
         try:
             return KafkaConsumer(
                 KAFKA_TOPIC,
@@ -43,22 +43,3 @@ def get_consumer():
     if consumer is None:
         consumer = get_kafka_consumer()
     return consumer
-
-# producer = KafkaProducer(
-#     bootstrap_servers=[KAFKA_SERVER],
-#     value_serializer=lambda v: json.dumps(v).encode('utf-8')
-# )
-
-# consumer = KafkaConsumer(
-#     KAFKA_TOPIC,
-#     bootstrap_servers=[KAFKA_SERVER],
-#     value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-# )
-
-# # this I will use in routes when any request is received
-# def send_event(event_type, data):
-#     producer.send(KAFKA_TOPIC, {'type': event_type, 'data': data})
-#     producer.flush()
-
-# def get_consumer():
-#     return consumer

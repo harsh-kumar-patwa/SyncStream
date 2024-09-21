@@ -5,7 +5,6 @@ from database.db import initialise_db
 from utils.kafka_client import get_kafka_producer, get_kafka_consumer
 import threading
 import logging  
-import sys
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
