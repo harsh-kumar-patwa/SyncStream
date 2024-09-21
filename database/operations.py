@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 def get_db_connection():
     return sqlite3.connect(DATABASE_PATH)
 
-
+# Add user method
 def create_customer(name, email, stripe_id=None):
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -24,7 +24,7 @@ def create_customer(name, email, stripe_id=None):
     finally:
         connection.close()
 
-
+# update user method
 def update_customer(customer_id, **kwargs):
     connection = get_db_connection()
     try:
@@ -42,7 +42,7 @@ def update_customer(customer_id, **kwargs):
     finally:
         connection.close()
 
-
+# get customer method
 def get_customer(customer_id):
     connection = get_db_connection()
     try:
@@ -59,7 +59,7 @@ def get_customer(customer_id):
     finally:
         connection.close()
 
-
+# delete customer method
 def delete_customer(customer_id):
     connection = get_db_connection()
     try:
@@ -82,7 +82,7 @@ def delete_customer(customer_id):
     finally:
         connection.close()
 
-
+# get customer by external id method
 def get_customer_by_external_id(external_id_type, external_id):
     connection = get_db_connection()
     try:
@@ -99,6 +99,7 @@ def get_customer_by_external_id(external_id_type, external_id):
     finally:
         connection.close()
 
+# get customer by email id
 def get_customer_by_email(email):
     connection = get_db_connection()
     try:
@@ -115,6 +116,7 @@ def get_customer_by_email(email):
     finally:
         connection.close()
 
+# get all customers method
 def get_all_customers():
     connection = get_db_connection()
     try:

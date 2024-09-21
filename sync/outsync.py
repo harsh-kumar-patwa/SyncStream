@@ -4,6 +4,7 @@ from database.operations import update_customer
 
 stripe_integration = StripeIntegration()
 
+# Sending action to external system 
 def send_update_to_external_system(event):
     if event['type']=='create':
         stripe_id = stripe_integration.create_customer(event['data']['name'], event['data']['email'])

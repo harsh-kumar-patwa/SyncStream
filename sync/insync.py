@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# InSync from Stripe
 def sync_from_stripe(event):
     event_type = event['type']
     event_data = event['data']['object']
@@ -10,6 +11,7 @@ def sync_from_stripe(event):
     logger.info(f"Processing Stripe event: {event_type}")
 
     try:
+        # Handling create response from Stripe
         if event_type == 'customer.created':
             name = event_data.get('name', '')
             email = event_data.get('email', '')
@@ -41,6 +43,7 @@ def sync_from_stripe(event):
                 else:
                     logger.info(f"Created customer with ID {customer_id} from Stripe event")
         
+        # Handing update response from Stripe
         elif event_type == 'customer.updated':
             stripe_id = event_data.get('id')
             if not stripe_id:
@@ -64,6 +67,7 @@ def sync_from_stripe(event):
             else:
                 logger.warning(f"Customer with Stripe ID {stripe_id} not found in local database")
         
+        # Handling delete response from Stripe
         elif event_type == 'customer.deleted':
             stripe_id = event_data.get('id')
             if not stripe_id:
