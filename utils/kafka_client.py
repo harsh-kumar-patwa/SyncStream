@@ -27,7 +27,6 @@ def get_kafka_consumer():
             print(f"Failed to connect to Kafka, retrying... Error: {e}")
             time.sleep(5)
     raise Exception("Failed to connect to Kafka after several attempts")
-
 producer = None
 consumer = None
 

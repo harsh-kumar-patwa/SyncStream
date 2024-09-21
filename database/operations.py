@@ -1,5 +1,5 @@
 import sqlite3 
-from config import DATABASE_PATH
+from config import DATABASE_PATH,ENABLED_INTEGRATIONS
 import logging
 
 logger = logging.getLogger(__name__)
@@ -8,11 +8,19 @@ def get_db_connection():
     return sqlite3.connect(DATABASE_PATH)
 
 # Add user method
-def create_customer(name, email, stripe_id=None):
+def create_customer(name, email, **kwargs):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        cursor.execute('INSERT INTO customer (name, email, stripe_id) VALUES (?, ?, ?)', (name, email, stripe_id))
+        columns = ['name', 'email'] + [f'{integration}_id' for integration in ENABLED_INTEGRATIONS]
+        values = [name, email] + [kwargs.get(f'{integration}_id') for integration in ENABLED_INTEGRATIONS]
+        placeholders = ', '.join(['?' for _ in range(len(columns))])
+        
+        cursor.execute(f'''
+            INSERT INTO customer ({', '.join(columns)})
+            VALUES ({placeholders})
+        ''', values)
+        
         customer_id = cursor.lastrowid
         connection.commit()
         return customer_id, None
@@ -50,7 +58,8 @@ def get_customer(customer_id):
         cursor.execute('SELECT * FROM customer WHERE id = ?', (customer_id,))
         customer = cursor.fetchone()
         if customer:
-            return dict(zip(['id', 'name', 'email', 'stripe_id'], customer)), None
+            columns = [description[0] for description in cursor.description]
+            return dict(zip(columns, customer)), None
         else:
             return None, "Customer not found"
     except sqlite3.Error as e:
@@ -64,18 +73,11 @@ def delete_customer(customer_id):
     connection = get_db_connection()
     try:
         cursor = connection.cursor()
-        cursor.execute('SELECT stripe_id FROM customer WHERE id = ?', (customer_id,))
-        result = cursor.fetchone()
-        
-        if not result:
-            return None, "Customer not found"
-        
-        stripe_id = result[0]
         cursor.execute('DELETE FROM customer WHERE id = ?', (customer_id,))
         connection.commit()
         if cursor.rowcount == 0:
             return None, "Customer not found"
-        return stripe_id, None
+        return customer_id, None
     except sqlite3.Error as e:
         logger.error(f"Database error: {str(e)}")
         return None, f"Database error: {str(e)}"
@@ -90,7 +92,8 @@ def get_customer_by_external_id(external_id_type, external_id):
         cursor.execute(f'SELECT * FROM customer WHERE {external_id_type} = ?', (external_id,))
         customer = cursor.fetchone()
         if customer:
-            return dict(zip(['id', 'name', 'email', 'stripe_id'], customer)), None
+            columns = [description[0] for description in cursor.description]
+            return dict(zip(columns, customer)), None
         else:
             return None, f"Customer with {external_id_type} {external_id} not found"
     except sqlite3.Error as e:

@@ -1,9 +1,8 @@
 from flask import Blueprint, request, jsonify
 from database.operations import create_customer,update_customer,delete_customer,get_customer,get_all_customers
 from utils.kafka_client import send_event 
-from sync.insync import sync_from_stripe
-from config import STRIPE_WEBHOOK_SECRET
-import stripe
+from sync.insync import sync_from_external
+from config import ENABLED_INTEGRATIONS
 import logging
 
 api = Blueprint('api',__name__)
@@ -48,53 +47,55 @@ def modify_customer(customer_id):
         return jsonify({'error': error}), 500
 
     try:
-        send_event('update', {'id':customer_id,'stripe_id': updated_customer['stripe_id'], **data})
+        event_data = {'id': customer_id, **data}
+        for integration in ENABLED_INTEGRATIONS:
+            event_data[f'{integration}_id'] = updated_customer.get(f'{integration}_id')
+        send_event('update', event_data)
     except Exception as e:
         logger.error(f"Error sending update event to Kafka: {str(e)}")
-        return jsonify({'error':'Customer updated but could not send to Stripe'}), 409
+        return jsonify({'error':'Customer updated but could not send to External System'}), 409
     return jsonify({'success': True, 'customer': updated_customer}), 200
 
 
 #Delete user request
 @api.route('/customers/<int:customer_id>', methods=['DELETE'])
 def remove_customer(customer_id):
-    stripe_id, error = delete_customer(int(customer_id))
+    customer, error = get_customer(customer_id)
+    if error:
+        return jsonify({'error': error}), 404
+
+    _, error = delete_customer(customer_id)
     if error:
         logger.error(f"Error deleting customer {customer_id}: {error}")
-        return jsonify({'error': error}), 404 if "not found" in error.lower() else 500
+        return jsonify({'error': error}), 500
 
     try:
-        send_event('delete', {'id':customer_id,'stripe_id': stripe_id})
+        event_data = {'id': customer_id}
+        for integration in ENABLED_INTEGRATIONS:
+            event_data[f'{integration}_id'] = customer.get(f'{integration}_id')
+        send_event('delete', event_data)
     except Exception as e:
         logger.error(f"Error sending delete event to Kafka: {str(e)}")
-        return jsonify({'error':'Customer deleted but could not send to Stripe'}), 409
-    return jsonify({'success': True,'message':'Deletion successful'}), 200
+        return jsonify({'error': 'Customer deleted but could not send to external systems'}), 409
+    return jsonify({'success': True, 'message': 'Deletion successful'}), 200
 
 
-#Webhook 
-@api.route('/webhook', methods=['POST'])
-def stripe_webhook():
-    payload = request.data
-    sig_header = request.headers.get('Stripe-Signature')
+# Webhook 
+@api.route('/webhook/<integration>', methods=['POST'])
+def external_webhook(integration):
+    if integration not in ENABLED_INTEGRATIONS:
+        return jsonify({'error': 'Unsupported integration'}), 400
+    
+    payload = request.json
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, STRIPE_WEBHOOK_SECRET
-        )
-    except ValueError as e:
-        logger.error(f"Invalid payload: {str(e)}")
-        return jsonify({'error': 'Invalid payload'}), 400
-    except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid signature: {str(e)}")
-        return jsonify({'error': 'Invalid signature'}), 400
-
-    try:
-        sync_from_stripe(event)
+        sync_from_external(integration, payload)
     except Exception as e:
-        logger.exception(f"Error processing Stripe event: {str(e)}")
+        logger.exception(f"Error processing {integration} webhook: {str(e)}")
         return jsonify({'error': 'Error processing event'}), 500
 
     return jsonify({'success': True}), 200
 
+# Get method for testing purpose
 @api.route('/customers', methods=['GET'])
 def get_customers():
     customers, error = get_all_customers()
@@ -103,6 +104,7 @@ def get_customers():
         return jsonify({'error': error}), 500
     return jsonify({'customers': customers}), 200
 
+# Get single customer
 @api.route('/customers/<int:customer_id>', methods=['GET'])
 def get_single_customer(customer_id):
     customer, error = get_customer(customer_id)

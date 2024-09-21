@@ -1,10 +1,11 @@
 import stripe
 from .base_integration import Integration
-from config import STRIPE_API_KEY
-
-stripe.api_key = STRIPE_API_KEY
+from config import INTEGRATIONS
 
 class StripeIntegration(Integration):
+    def __init__(self):
+        stripe.api_key = INTEGRATIONS['stripe']['api_key']
+        
     def create_customer(self, name, email):
         customer = stripe.Customer.create(name=name, email=email)
         return customer.id
