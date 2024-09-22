@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+# Base integration class to be implemented by all integration classes
 class Integration(ABC):
     @abstractmethod
     def create_customer(self,name,email):

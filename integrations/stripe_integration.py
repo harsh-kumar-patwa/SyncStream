@@ -2,6 +2,7 @@ import stripe
 from .base_integration import Integration
 from config import INTEGRATIONS
 
+# Stripe integration class implementation
 class StripeIntegration(Integration):
     def __init__(self):
         stripe.api_key = INTEGRATIONS['stripe']['api_key']

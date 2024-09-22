@@ -3,6 +3,7 @@ from config import KAFKA_SERVER,KAFKA_TOPIC
 import json
 import time
 
+# Returning kafka producer instance
 def get_kafka_producer():
     for _ in range(5):
         try:
@@ -15,6 +16,7 @@ def get_kafka_producer():
             time.sleep(5)
     raise Exception("Failed to connect to Kafka after several attempts")
 
+# Returning kafka consumer instance
 def get_kafka_consumer():
     for _ in range(5):
         try:
@@ -30,6 +32,7 @@ def get_kafka_consumer():
 producer = None
 consumer = None
 
+# Sending event to kafka
 def send_event(event_type, data):
     global producer
     if producer is None:
@@ -37,6 +40,7 @@ def send_event(event_type, data):
     producer.send(KAFKA_TOPIC, {'type': event_type, 'data': data})
     producer.flush()
 
+# Getting kafka consumer instance
 def get_consumer():
     global consumer
     if consumer is None:

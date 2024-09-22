@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Getting db connection
 def get_db_connection():
     return sqlite3.connect(DATABASE_PATH)
 

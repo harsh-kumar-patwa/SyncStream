@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.register_blueprint(api)
 
+# Kafka health check
 def kafka_health_check():
     logger.info("Checking Kafka connection...")
     try:
@@ -23,6 +24,7 @@ def kafka_health_check():
         logger.error(f"Failed to connect to Kafka: {e}")
         return False
 
+# DB health check
 def db_health_check():
     logger.info("Checking database connection...")
     try:
@@ -38,6 +40,7 @@ if __name__ == '__main__':
         db_status = db_health_check()
         kafka_status = kafka_health_check()
 
+        # If all connections are established, starting the services
         if db_status and kafka_status:
             logger.info("All connections established successfully:")
             logger.info("Starting Kafka consumer thread...")
